@@ -21,3 +21,4 @@ ignore = ["E501"]  # Black does not split long strings or comments.
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]

@@ -6,17 +6,18 @@ target-version = ["py310"]
 line-length = 100
 target-version = "py310"
 exclude = [
+    ".venv",
+    "__pycache__",
+    "app_logs",
     "demo_outputs",
-    "demo_outputs_v2",
-    "demo_outputs_v3",
-    "demo_outputs_v4",
     "demo_outputs_baseline12",
+    "outputs",
     "render_preview",
 ]
 
 [tool.ruff.lint]
 select = ["E", "F", "I"]
-ignore = []
+ignore = ["E501"]  # Black does not split long strings or comments.
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

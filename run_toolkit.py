@@ -16,19 +16,18 @@ This is a demo toolkit + workflow; adapt to site meters and SSAB-specific report
 from __future__ import annotations
 
 import argparse
-import os
-import math
 import datetime as dt
+import os
 from dataclasses import dataclass
-from typing import Optional, Tuple, List
+from typing import List, Tuple
 
 import numpy as np
 import pandas as pd
 
-
 # -----------------------------
 # Helpers
 # -----------------------------
+
 
 def parse_period_to_datetime(s: str) -> dt.date:
     """
@@ -43,7 +42,8 @@ def parse_period_to_datetime(s: str) -> dt.date:
     if "W" in s:
         # ISO week: 2026-W05
         year, week = s.split("-W")
-        year = int(year); week = int(week)
+        year = int(year)
+        week = int(week)
         # ISO week date: Monday
         return dt.date.fromisocalendar(year, week, 1)
     # Monthly
@@ -113,18 +113,21 @@ def read_data_from_workbook(wb) -> pd.DataFrame:
             continue
         data.append(r)
 
-    df = pd.DataFrame(data, columns=[
-        "Period",
-        "Electricity_MWh",
-        "NaturalGas_MWh",
-        "Steam_MWh",
-        "Production_t",
-        "OperatingHours_h",
-        "Notes",
-    ])
+    df = pd.DataFrame(
+        data,
+        columns=[
+            "Period",
+            "Electricity_MWh",
+            "NaturalGas_MWh",
+            "Steam_MWh",
+            "Production_t",
+            "OperatingHours_h",
+            "Notes",
+        ],
+    )
     # Coerce types
     df["Period"] = df["Period"].astype(str).str.strip()
-    for c in ["Electricity_MWh","NaturalGas_MWh","Steam_MWh","Production_t","OperatingHours_h"]:
+    for c in ["Electricity_MWh", "NaturalGas_MWh", "Steam_MWh", "Production_t", "OperatingHours_h"]:
         df[c] = df[c].apply(safe_float)
 
     df = df[df["Period"].str.len() > 0].copy()
@@ -133,11 +136,18 @@ def read_data_from_workbook(wb) -> pd.DataFrame:
 
 def read_data_from_csv(csv_path: str) -> pd.DataFrame:
     df = pd.read_csv(csv_path)
-    expected = {"Period","Electricity_MWh","NaturalGas_MWh","Steam_MWh","Production_t","OperatingHours_h"}
+    expected = {
+        "Period",
+        "Electricity_MWh",
+        "NaturalGas_MWh",
+        "Steam_MWh",
+        "Production_t",
+        "OperatingHours_h",
+    }
     missing = expected - set(df.columns)
     if missing:
         raise ValueError(f"CSV missing columns: {sorted(missing)}")
-    for c in ["Electricity_MWh","NaturalGas_MWh","Steam_MWh","Production_t","OperatingHours_h"]:
+    for c in ["Electricity_MWh", "NaturalGas_MWh", "Steam_MWh", "Production_t", "OperatingHours_h"]:
         df[c] = df[c].apply(safe_float)
     df["Period"] = df["Period"].astype(str).str.strip()
     df["Notes"] = df.get("Notes", "")
@@ -153,16 +163,16 @@ def fit_baseline_model(df_base: pd.DataFrame, driver_model: str) -> Tuple[np.nda
     feats = ["Intercept"]
     X_parts = [np.ones(len(df_base))]
     dm = driver_model.strip().lower()
-    if dm in ("production","prod"):
+    if dm in ("production", "prod"):
         X_parts.append(df_base["Production_t"].values.astype(float))
         feats.append("Production_t")
-    elif dm in ("hours","operatinghours","operating hours"):
+    elif dm in ("hours", "operatinghours", "operating hours"):
         X_parts.append(df_base["OperatingHours_h"].values.astype(float))
         feats.append("OperatingHours_h")
     else:
         X_parts.append(df_base["Production_t"].values.astype(float))
         X_parts.append(df_base["OperatingHours_h"].values.astype(float))
-        feats.extend(["Production_t","OperatingHours_h"])
+        feats.extend(["Production_t", "OperatingHours_h"])
     X = np.vstack(X_parts).T
     beta, *_ = np.linalg.lstsq(X, y, rcond=None)
     return beta, feats
@@ -193,7 +203,9 @@ def compute_kpis(df: pd.DataFrame, params: Params) -> Tuple[pd.DataFrame, pd.Dat
     df["Date"] = df["Period"].apply(parse_period_to_datetime)
     df = df.sort_values("Date").reset_index(drop=True)
 
-    df["TotalEnergy_MWh"] = df[["Electricity_MWh","NaturalGas_MWh","Steam_MWh"]].sum(axis=1, min_count=1)
+    df["TotalEnergy_MWh"] = df[["Electricity_MWh", "NaturalGas_MWh", "Steam_MWh"]].sum(
+        axis=1, min_count=1
+    )
     df["Intensity_kWh_per_t"] = (df["TotalEnergy_MWh"] * 1000.0) / df["Production_t"]
 
     # Baseline selection
@@ -221,33 +233,54 @@ def compute_kpis(df: pd.DataFrame, params: Params) -> Tuple[pd.DataFrame, pd.Dat
 
     df["ExpectedEnergy_MWh"] = [
         predict_energy(beta, feat_names, p, h) if has_required_drivers(feat_names, p, h) else np.nan
-        for p,h in zip(df["Production_t"].values, df["OperatingHours_h"].values)
+        for p, h in zip(df["Production_t"].values, df["OperatingHours_h"].values)
     ]
     df["Residual_MWh"] = df["TotalEnergy_MWh"] - df["ExpectedEnergy_MWh"]
     df["NormalizedEnergy_MWh"] = df["TotalEnergy_MWh"] - df["ExpectedEnergy_MWh"] + ref_energy
 
     # Rolling trends
     w = max(int(params.rolling_window), 1)
-    df["Intensity_roll"] = df["Intensity_kWh_per_t"].rolling(w, min_periods=max(1, w//2)).mean()
-    df["NormEnergy_roll"] = df["NormalizedEnergy_MWh"].rolling(w, min_periods=max(1, w//2)).mean()
+    df["Intensity_roll"] = df["Intensity_kWh_per_t"].rolling(w, min_periods=max(1, w // 2)).mean()
+    df["NormEnergy_roll"] = df["NormalizedEnergy_MWh"].rolling(w, min_periods=max(1, w // 2)).mean()
 
     # Anomalies
-    resid_std = float(df_base["TotalEnergy_MWh"].sub(df_base["TotalEnergy_MWh"].mean()).std())  # fallback
-    base_resid_std = float(df_base.assign(res=df_base["TotalEnergy_MWh"] - df_base["TotalEnergy_MWh"].mean())["res"].std())
+    resid_std = float(
+        df_base["TotalEnergy_MWh"].sub(df_base["TotalEnergy_MWh"].mean()).std()
+    )  # fallback
+    base_resid_std = float(
+        df_base.assign(res=df_base["TotalEnergy_MWh"] - df_base["TotalEnergy_MWh"].mean())[
+            "res"
+        ].std()
+    )
     # Better: std of residuals from model
-    base_resids = df_base["TotalEnergy_MWh"] - np.array([
-        predict_energy(beta, feat_names, p, h)
-        for p,h in zip(df_base["Production_t"].values, df_base["OperatingHours_h"].values)
-    ])
-    resid_std = float(np.nanstd(base_resids, ddof=1)) if np.isfinite(np.nanstd(base_resids)) else base_resid_std
+    base_resids = df_base["TotalEnergy_MWh"] - np.array(
+        [
+            predict_energy(beta, feat_names, p, h)
+            for p, h in zip(df_base["Production_t"].values, df_base["OperatingHours_h"].values)
+        ]
+    )
+    resid_std = (
+        float(np.nanstd(base_resids, ddof=1))
+        if np.isfinite(np.nanstd(base_resids))
+        else base_resid_std
+    )
     resid_std = resid_std if resid_std > 1e-9 else 1.0
 
     df["z_resid"] = df["Residual_MWh"] / resid_std
 
     flags = []
-    for i,row in df.iterrows():
+    for i, row in df.iterrows():
         f = []
-        if any(pd.isna(row[c]) for c in ["Electricity_MWh","NaturalGas_MWh","Steam_MWh","Production_t","OperatingHours_h"]):
+        if any(
+            pd.isna(row[c])
+            for c in [
+                "Electricity_MWh",
+                "NaturalGas_MWh",
+                "Steam_MWh",
+                "Production_t",
+                "OperatingHours_h",
+            ]
+        ):
             f.append("MISSING_DATA")
         if pd.notna(row["z_resid"]) and abs(row["z_resid"]) >= params.anomaly_z:
             f.append("ANOMALY_RESID")
@@ -273,7 +306,7 @@ def compute_kpis(df: pd.DataFrame, params: Params) -> Tuple[pd.DataFrame, pd.Dat
     # Actions
     actions = []
     today = dt.date.today().isoformat()
-    for _,row in df[df["Flags"].astype(str).str.len() > 0].iterrows():
+    for _, row in df[df["Flags"].astype(str).str.len() > 0].iterrows():
         period = row["Period"]
         flagset = str(row["Flags"]).split("|")
         for f in flagset:
@@ -291,16 +324,18 @@ def compute_kpis(df: pd.DataFrame, params: Params) -> Tuple[pd.DataFrame, pd.Dat
             else:
                 sev = "Low"
                 sug = "Review flagged item."
-            actions.append({
-                "CreatedOn": today,
-                "Period": period,
-                "IssueType": f,
-                "Severity": sev,
-                "SuggestedInvestigation": sug,
-                "Owner": "",
-                "Status": "Open",
-                "Notes": "",
-            })
+            actions.append(
+                {
+                    "CreatedOn": today,
+                    "Period": period,
+                    "IssueType": f,
+                    "Severity": sev,
+                    "SuggestedInvestigation": sug,
+                    "Owner": "",
+                    "Status": "Open",
+                    "Notes": "",
+                }
+            )
     actions_df = pd.DataFrame(actions)
 
     meta = {
@@ -325,13 +360,20 @@ def write_results_to_workbook(wb, df: pd.DataFrame, actions_df: pd.DataFrame):
         ws.delete_rows(3, ws.max_row - 2)
 
     out_cols = [
-        "Period","Electricity_MWh","NaturalGas_MWh","Steam_MWh","TotalEnergy_MWh",
-        "Production_t","OperatingHours_h",
+        "Period",
+        "Electricity_MWh",
+        "NaturalGas_MWh",
+        "Steam_MWh",
+        "TotalEnergy_MWh",
+        "Production_t",
+        "OperatingHours_h",
         "Intensity_kWh_per_t",
-        "ExpectedEnergy_MWh","NormalizedEnergy_MWh",
-        "Residual_MWh","Flags"
+        "ExpectedEnergy_MWh",
+        "NormalizedEnergy_MWh",
+        "Residual_MWh",
+        "Flags",
     ]
-    for _,row in df[out_cols].iterrows():
+    for _, row in df[out_cols].iterrows():
         ws.append([row[c] if pd.notna(row[c]) else "" for c in out_cols])
 
     # Actions
@@ -339,8 +381,22 @@ def write_results_to_workbook(wb, df: pd.DataFrame, actions_df: pd.DataFrame):
     if wsA.max_row > 2:
         wsA.delete_rows(3, wsA.max_row - 2)
     if len(actions_df) > 0:
-        for _,r in actions_df.iterrows():
-            wsA.append([r.get(c,"") for c in ["CreatedOn","Period","IssueType","Severity","SuggestedInvestigation","Owner","Status","Notes"]])
+        for _, r in actions_df.iterrows():
+            wsA.append(
+                [
+                    r.get(c, "")
+                    for c in [
+                        "CreatedOn",
+                        "Period",
+                        "IssueType",
+                        "Severity",
+                        "SuggestedInvestigation",
+                        "Owner",
+                        "Status",
+                        "Notes",
+                    ]
+                ]
+            )
 
     # Report summary
     wsR = wb["Report"]
@@ -349,8 +405,12 @@ def write_results_to_workbook(wb, df: pd.DataFrame, actions_df: pd.DataFrame):
         r = latest.iloc[0]
         wsR["B3"].value = r["Period"]
         wsR["B4"].value = float(r["TotalEnergy_MWh"])
-        wsR["B5"].value = float(r["Intensity_kWh_per_t"]) if pd.notna(r["Intensity_kWh_per_t"]) else ""
-        wsR["B6"].value = float(r["NormalizedEnergy_MWh"]) if pd.notna(r["NormalizedEnergy_MWh"]) else ""
+        wsR["B5"].value = (
+            float(r["Intensity_kWh_per_t"]) if pd.notna(r["Intensity_kWh_per_t"]) else ""
+        )
+        wsR["B6"].value = (
+            float(r["NormalizedEnergy_MWh"]) if pd.notna(r["NormalizedEnergy_MWh"]) else ""
+        )
     wsR["B7"].value = int((actions_df["Status"] == "Open").sum()) if len(actions_df) else 0
 
     # format numbers (simple)
@@ -359,7 +419,7 @@ def write_results_to_workbook(wb, df: pd.DataFrame, actions_df: pd.DataFrame):
     wsR["B6"].number_format = "0.0"
 
     # Make filled cells black (not input style) - optional
-    for addr in ["B3","B4","B5","B6","B7"]:
+    for addr in ["B3", "B4", "B5", "B6", "B7"]:
         wsR[addr].font = Font(color="000000")
 
 
@@ -380,8 +440,8 @@ def make_plots(df: pd.DataFrame, params: Params, outdir: str) -> List[str]:
         df["Electricity_MWh"].fillna(0),
         df["NaturalGas_MWh"].fillna(0),
         df["Steam_MWh"].fillna(0),
-        labels=["Electricity","Natural gas","Steam"],
-        alpha=0.9
+        labels=["Electricity", "Natural gas", "Steam"],
+        alpha=0.9,
     )
     ax.set_title("Energy consumption by source (MWh)")
     ax.set_ylabel("MWh")
@@ -398,7 +458,9 @@ def make_plots(df: pd.DataFrame, params: Params, outdir: str) -> List[str]:
     fig = plt.figure(figsize=(8.27, 3.1))
     ax = fig.add_subplot(111)
     ax.plot(dates, df["Intensity_kWh_per_t"], marker="o", linewidth=1.2, label="Intensity (kWh/t)")
-    ax.plot(dates, df["Intensity_roll"], linewidth=2.0, label=f"Rolling avg ({params.rolling_window})")
+    ax.plot(
+        dates, df["Intensity_roll"], linewidth=2.0, label=f"Rolling avg ({params.rolling_window})"
+    )
     # baseline mean
     b_start = pd.to_datetime(parse_period_to_datetime(params.baseline_start))
     b_end = pd.to_datetime(parse_period_to_datetime(params.baseline_end))
@@ -419,8 +481,16 @@ def make_plots(df: pd.DataFrame, params: Params, outdir: str) -> List[str]:
     # 3) Normalised energy trend
     fig = plt.figure(figsize=(8.27, 3.1))
     ax = fig.add_subplot(111)
-    ax.plot(dates, df["NormalizedEnergy_MWh"], marker="o", linewidth=1.2, label="Normalised energy (MWh)")
-    ax.plot(dates, df["NormEnergy_roll"], linewidth=2.0, label=f"Rolling avg ({params.rolling_window})")
+    ax.plot(
+        dates,
+        df["NormalizedEnergy_MWh"],
+        marker="o",
+        linewidth=1.2,
+        label="Normalised energy (MWh)",
+    )
+    ax.plot(
+        dates, df["NormEnergy_roll"], linewidth=2.0, label=f"Rolling avg ({params.rolling_window})"
+    )
     ax.set_title("Normalised energy (baseline-referenced)")
     ax.set_ylabel("MWh")
     ax.grid(True, alpha=0.2)
@@ -435,12 +505,14 @@ def make_plots(df: pd.DataFrame, params: Params, outdir: str) -> List[str]:
     # 4) Scatter energy vs production (+ highlight anomalies)
     fig = plt.figure(figsize=(8.27, 3.1))
     ax = fig.add_subplot(111)
-    ok = df.dropna(subset=["TotalEnergy_MWh","Production_t"])
+    ok = df.dropna(subset=["TotalEnergy_MWh", "Production_t"])
     anomalies = ok[ok["Flags"].astype(str).str.contains("ANOMALY_RESID", na=False)]
     normal = ok[~ok.index.isin(anomalies.index)]
     ax.scatter(normal["Production_t"], normal["TotalEnergy_MWh"], label="Normal")
     if len(anomalies):
-        ax.scatter(anomalies["Production_t"], anomalies["TotalEnergy_MWh"], label="Anomaly", marker="x")
+        ax.scatter(
+            anomalies["Production_t"], anomalies["TotalEnergy_MWh"], label="Anomaly", marker="x"
+        )
     ax.set_title("Total energy vs production")
     ax.set_xlabel("Production (t)")
     ax.set_ylabel("Total energy (MWh)")
@@ -455,7 +527,9 @@ def make_plots(df: pd.DataFrame, params: Params, outdir: str) -> List[str]:
     return img_paths
 
 
-def make_pdf_report(df: pd.DataFrame, actions_df: pd.DataFrame, params: Params, img_paths: List[str], out_pdf: str):
+def make_pdf_report(
+    df: pd.DataFrame, actions_df: pd.DataFrame, params: Params, img_paths: List[str], out_pdf: str
+):
     from reportlab.lib.pagesizes import A4
     from reportlab.lib.units import cm
     from reportlab.pdfgen import canvas
@@ -465,65 +539,83 @@ def make_pdf_report(df: pd.DataFrame, actions_df: pd.DataFrame, params: Params, 
 
     # Title
     c.setFont("Helvetica-Bold", 14)
-    c.drawString(1.2*cm, H-1.4*cm, f"Energy KPI & Normalisation Report — {params.plant_name}")
+    c.drawString(1.2 * cm, H - 1.4 * cm, f"Energy KPI & Normalisation Report — {params.plant_name}")
 
     # Subtitle / coverage
     c.setFont("Helvetica", 9)
     period_min = df["Period"].iloc[0]
     period_max = df["Period"].iloc[-1]
-    c.drawString(1.2*cm, H-2.0*cm, f"Coverage: {period_min} → {period_max}   |   Baseline: {params.baseline_start} → {params.baseline_end}   |   Driver model: {params.driver_model}")
+    c.drawString(
+        1.2 * cm,
+        H - 2.0 * cm,
+        f"Coverage: {period_min} → {period_max}   |   Baseline: {params.baseline_start} → {params.baseline_end}   |   Driver model: {params.driver_model}",
+    )
 
     # KPI tiles
     latest = df.dropna(subset=["TotalEnergy_MWh"]).tail(1).iloc[0]
     kpis = [
         ("Latest total energy (MWh)", f"{latest['TotalEnergy_MWh']:.1f}"),
-        ("Latest intensity (kWh/t)", f"{latest['Intensity_kWh_per_t']:.1f}" if pd.notna(latest["Intensity_kWh_per_t"]) else "—"),
-        ("Latest normalised energy (MWh)", f"{latest['NormalizedEnergy_MWh']:.1f}" if pd.notna(latest["NormalizedEnergy_MWh"]) else "—"),
+        (
+            "Latest intensity (kWh/t)",
+            (
+                f"{latest['Intensity_kWh_per_t']:.1f}"
+                if pd.notna(latest["Intensity_kWh_per_t"])
+                else "—"
+            ),
+        ),
+        (
+            "Latest normalised energy (MWh)",
+            (
+                f"{latest['NormalizedEnergy_MWh']:.1f}"
+                if pd.notna(latest["NormalizedEnergy_MWh"])
+                else "—"
+            ),
+        ),
         ("Open issues", f"{int((actions_df['Status']=='Open').sum()) if len(actions_df) else 0}"),
     ]
-    x0, y0 = 1.2*cm, H-3.2*cm
-    tile_w, tile_h = 4.8*cm, 1.3*cm
+    x0, y0 = 1.2 * cm, H - 3.2 * cm
+    tile_w, tile_h = 4.8 * cm, 1.3 * cm
     c.setLineWidth(0.6)
-    for i,(lab,val) in enumerate(kpis):
-        x = x0 + i*(tile_w+0.3*cm)
-        c.rect(x, y0-tile_h, tile_w, tile_h)
+    for i, (lab, val) in enumerate(kpis):
+        x = x0 + i * (tile_w + 0.3 * cm)
+        c.rect(x, y0 - tile_h, tile_w, tile_h)
         c.setFont("Helvetica", 8)
-        c.drawString(x+0.2*cm, y0-0.45*cm, lab)
+        c.drawString(x + 0.2 * cm, y0 - 0.45 * cm, lab)
         c.setFont("Helvetica-Bold", 12)
-        c.drawString(x+0.2*cm, y0-1.05*cm, val)
+        c.drawString(x + 0.2 * cm, y0 - 1.05 * cm, val)
 
     # Place 4 plots in 2x2 grid
-    plot_w = (W - 2.4*cm - 0.6*cm)/2
-    plot_h = 5.0*cm
-    top_y = H-4.1*cm
+    plot_w = (W - 2.4 * cm - 0.6 * cm) / 2
+    plot_h = 5.0 * cm
+    top_y = H - 4.1 * cm
     coords = [
-        (1.2*cm, top_y-plot_h),
-        (1.2*cm+plot_w+0.6*cm, top_y-plot_h),
-        (1.2*cm, top_y-2*plot_h-0.8*cm),
-        (1.2*cm+plot_w+0.6*cm, top_y-2*plot_h-0.8*cm),
+        (1.2 * cm, top_y - plot_h),
+        (1.2 * cm + plot_w + 0.6 * cm, top_y - plot_h),
+        (1.2 * cm, top_y - 2 * plot_h - 0.8 * cm),
+        (1.2 * cm + plot_w + 0.6 * cm, top_y - 2 * plot_h - 0.8 * cm),
     ]
-    for p,(x,y) in zip(img_paths[:4], coords):
+    for p, (x, y) in zip(img_paths[:4], coords):
         c.drawImage(p, x, y, width=plot_w, height=plot_h, preserveAspectRatio=True, anchor="c")
 
     # Small table: last 6 periods
     c.setFont("Helvetica-Bold", 9)
-    table_y = 2.8*cm
-    c.drawString(1.2*cm, table_y+1.0*cm, "Last periods snapshot")
+    table_y = 2.8 * cm
+    c.drawString(1.2 * cm, table_y + 1.0 * cm, "Last periods snapshot")
     snap = df.tail(6).copy()
-    cols = ["Period","TotalEnergy_MWh","Intensity_kWh_per_t","NormalizedEnergy_MWh","Flags"]
+    cols = ["Period", "TotalEnergy_MWh", "Intensity_kWh_per_t", "NormalizedEnergy_MWh", "Flags"]
     snap = snap[cols]
     # Header
     c.setFont("Helvetica-Bold", 8)
-    x = 1.2*cm
-    colw = [2.0*cm, 3.0*cm, 3.0*cm, 3.4*cm, 7.5*cm]
-    for j,h in enumerate(cols):
-        c.drawString(x, table_y+0.6*cm, h)
+    x = 1.2 * cm
+    colw = [2.0 * cm, 3.0 * cm, 3.0 * cm, 3.4 * cm, 7.5 * cm]
+    for j, h in enumerate(cols):
+        c.drawString(x, table_y + 0.6 * cm, h)
         x += colw[j]
     # Rows
     c.setFont("Helvetica", 8)
     for i in range(len(snap)):
-        y = table_y - i*0.45*cm
-        x = 1.2*cm
+        y = table_y - i * 0.45 * cm
+        x = 1.2 * cm
         r = snap.iloc[i]
         vals = [
             str(r["Period"]),
@@ -532,12 +624,16 @@ def make_pdf_report(df: pd.DataFrame, actions_df: pd.DataFrame, params: Params, 
             f"{r['NormalizedEnergy_MWh']:.1f}" if pd.notna(r["NormalizedEnergy_MWh"]) else "—",
             str(r["Flags"]) if r["Flags"] else "",
         ]
-        for j,v in enumerate(vals):
+        for j, v in enumerate(vals):
             c.drawString(x, y, v[:60])
             x += colw[j]
 
     c.setFont("Helvetica", 7)
-    c.drawString(1.2*cm, 1.2*cm, "Demo toolkit + workflow; adapt to site meters. Normalisation uses a baseline-fitted linear model vs selected drivers.")
+    c.drawString(
+        1.2 * cm,
+        1.2 * cm,
+        "Demo toolkit + workflow; adapt to site meters. Normalisation uses a baseline-fitted linear model vs selected drivers.",
+    )
     c.showPage()
     c.save()
 
@@ -546,10 +642,16 @@ def main():
     from openpyxl import load_workbook
 
     ap = argparse.ArgumentParser()
-    ap.add_argument("--workbook", required=True, help="Path to Excel workbook (template or filled workbook).")
+    ap.add_argument(
+        "--workbook", required=True, help="Path to Excel workbook (template or filled workbook)."
+    )
     ap.add_argument("--csv", default=None, help="Optional CSV input instead of Data_Entry sheet.")
     ap.add_argument("--outdir", default="outputs", help="Output directory.")
-    ap.add_argument("--out-workbook", default=None, help="Optional output workbook path (default: overwrite input workbook).")
+    ap.add_argument(
+        "--out-workbook",
+        default=None,
+        help="Optional output workbook path (default: overwrite input workbook).",
+    )
     args = ap.parse_args()
 
     outdir = args.outdir

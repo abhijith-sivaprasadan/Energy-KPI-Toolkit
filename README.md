@@ -13,7 +13,7 @@ An open-source demonstration toolkit for a reproducible industrial energy-engine
 
 ## What’s included
 
-- `SSAB_Energy_KPI_Toolkit_Template.xlsx`  
+- `Industrial_Energy_KPI_Template.xlsx`  
   Excel template with:
   - **Data_Entry** (paste/import meter + driver data)
   - **Parameters** (baseline, thresholds, driver model)
@@ -25,7 +25,7 @@ An open-source demonstration toolkit for a reproducible industrial energy-engine
   - one missing steam value (missing data)
   - a gas drift after mid-2025 (regime-change hint)
 
-- `SSAB_Energy_KPI_Toolkit_Demo.xlsx`  
+- `Industrial_Energy_KPI_Demo.xlsx`  
   The same template pre-filled with demo data and (after running) results.
 
 - `run_toolkit.py`  
@@ -45,12 +45,12 @@ pip install -r requirements.txt
 
 ### 2) Run on an Excel workbook
 ```bash
-python run_toolkit.py --workbook SSAB_Energy_KPI_Toolkit_Template.xlsx --outdir outputs
+python run_toolkit.py --workbook Industrial_Energy_KPI_Template.xlsx --outdir outputs
 ```
 
 ### 3) Run using CSV input (optional)
 ```bash
-python run_toolkit.py --workbook SSAB_Energy_KPI_Toolkit_Template.xlsx --csv demo_industrial_energy_data.csv --outdir outputs
+python run_toolkit.py --workbook Industrial_Energy_KPI_Template.xlsx --csv demo_industrial_energy_data.csv --outdir outputs
 ```
 
 ### 4) Run as a Streamlit app (recommended for exploration)
@@ -137,9 +137,10 @@ This gives a “baseline-referenced” energy KPI that is less sensitive to prod
 - U.S. DOE M&V options (A/B/C/D) overview: https://www.energy.gov/femp/measurement-and-verification-options-federal-energy-and-water-saving-projects
 - Page, E.S. (1954), CUSUM foundational paper, Biometrika: https://academic.oup.com/biomet/article/41/1-2/100/456627
 - Guo et al. (2018), regression models vs classic intensity for manufacturing tracking (ORNL/DOE): https://www.osti.gov/pages/biblio/1474575
-- SSAB sustainability reports and directives (incl. energy-management docs): https://www.ssab.com/en/company/sustainability/reports-and-documents
 
 These references informed baseline selection, normalization approach, whole-facility tracking perspective, and residual/drift diagnostics.
+
+See `docs/data_dictionary.md` for field definitions, units, and demo-data provenance.
 
 ---
 

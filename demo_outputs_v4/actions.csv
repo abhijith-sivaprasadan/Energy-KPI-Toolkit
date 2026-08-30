@@ -1,8 +1,0 @@
-CreatedOn,Period,IssueType,Severity,SuggestedInvestigation,Owner,Status,Notes
-2026-02-28,2024-11,ANOMALY_RESID,High,"Investigate step-change drivers: unplanned downtime, reheating/aux loads, compressed air leaks, steam trap issues, or metering drift. Cross-check sub-meter breakdown.",,Open,
-2026-02-28,2025-03,MISSING_DATA,Med,Check meter export / data pipeline; fill missing values or mark downtime. Verify unit consistency.,,Open,
-2026-02-28,2025-03,ANOMALY_RESID,High,"Investigate step-change drivers: unplanned downtime, reheating/aux loads, compressed air leaks, steam trap issues, or metering drift. Cross-check sub-meter breakdown.",,Open,
-2026-02-28,2025-03,DRIFT_HINT,High,"Possible regime change. Compare last periods vs baseline: equipment degradation, control changes, fuel quality, maintenance, or production mix shift.",,Open,
-2026-02-28,2025-04,DRIFT_HINT,High,"Possible regime change. Compare last periods vs baseline: equipment degradation, control changes, fuel quality, maintenance, or production mix shift.",,Open,
-2026-02-28,2025-07,DRIFT_HINT,High,"Possible regime change. Compare last periods vs baseline: equipment degradation, control changes, fuel quality, maintenance, or production mix shift.",,Open,
-2026-02-28,2025-08,DRIFT_HINT,High,"Possible regime change. Compare last periods vs baseline: equipment degradation, control changes, fuel quality, maintenance, or production mix shift.",,Open,

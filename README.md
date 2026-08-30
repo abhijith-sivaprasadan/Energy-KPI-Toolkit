@@ -1,13 +1,13 @@
 # Industrial Energy KPI + Normalisation + Reporting Toolkit (Python + Excel)
 
-A **portfolio/demo toolkit** to show an industrial energy-engineering workflow:
+An open-source demonstration toolkit for a reproducible industrial energy-engineering workflow:
 
 - ingest monthly/weekly energy data + production drivers  
 - compute KPIs/EnPIs + baseline and **driver-based normalisation**  
 - flag missing data, anomalies, and drift/regime-change hints  
 - export a **one-page management report** (PDF) + an **Actions log**
 
-> Demo toolkit + workflow; adapt to SSAB site meters and reporting conventions.
+> The included data are demonstrations only. Adapt the workflow to local meters, boundaries, and reporting conventions before operational use.
 
 ---
 

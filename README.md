@@ -168,3 +168,8 @@ pytest -q
 ```
 
 CI (GitHub Actions) runs lint, format-check, and tests on pushes/PRs.
+
+## Calculation verification
+
+See [numerical tests and statistical limits](docs/verification.md), including
+missing-meter propagation, zero-production intensity and synthetic truth labels.

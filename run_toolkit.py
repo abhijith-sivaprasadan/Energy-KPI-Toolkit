@@ -201,12 +201,17 @@ def has_required_drivers(feats: List[str], prod: float, hrs: float) -> bool:
 def compute_kpis(df: pd.DataFrame, params: Params) -> Tuple[pd.DataFrame, pd.DataFrame, dict]:
     df = df.copy()
     df["Date"] = df["Period"].apply(parse_period_to_datetime)
+    if df["Date"].duplicated().any():
+        raise ValueError("Duplicate periods are not allowed")
     df = df.sort_values("Date").reset_index(drop=True)
 
     df["TotalEnergy_MWh"] = df[["Electricity_MWh", "NaturalGas_MWh", "Steam_MWh"]].sum(
-        axis=1, min_count=1
+        axis=1, min_count=3
     )
-    df["Intensity_kWh_per_t"] = (df["TotalEnergy_MWh"] * 1000.0) / df["Production_t"]
+    # Missing meters are unknown, not zero. Intensity is undefined when the
+    # production denominator is zero/negative or below 1e-9 tonnes.
+    production = df["Production_t"].where(df["Production_t"] > 1e-9)
+    df["Intensity_kWh_per_t"] = (df["TotalEnergy_MWh"] * 1000.0) / production
 
     # Baseline selection
     b_start = parse_period_to_datetime(params.baseline_start)

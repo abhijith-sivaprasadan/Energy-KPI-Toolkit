@@ -173,3 +173,11 @@ CI (GitHub Actions) runs lint, format-check, and tests on pushes/PRs.
 
 See [numerical tests and statistical limits](docs/verification.md), including
 missing-meter propagation, zero-production intensity and synthetic truth labels.
+
+
+<!-- ci-workflow-coverage -->
+## Continuous integration
+
+[![CI](https://github.com/abhijith-sivaprasadan/Energy-KPI-Toolkit/actions/workflows/ci.yml/badge.svg?branch=codex%2Fci-publication)](https://github.com/abhijith-sivaprasadan/Energy-KPI-Toolkit/actions/workflows/ci.yml)
+
+See [CI coverage and limitations](CI.md) for the automated checks. The status badge tracks the published CI review branch.

@@ -46,6 +46,11 @@ jobs:
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
 
+      - name: Fresh synthetic KPI workflow and output checks
+        run: |
+          mkdir -p .ci-kpi
+          python run_toolkit.py --workbook Industrial_Energy_KPI_Template.xlsx --csv demo_industrial_energy_data.csv --outdir .ci-kpi --out-workbook .ci-kpi/processed.xlsx
+          python -c "import os,pandas as pd; root='.ci-kpi'; names=['results.csv','actions.csv','management_report.pdf','processed.xlsx']; assert all(os.path.getsize(os.path.join(root,n))>0 for n in names); df=pd.read_csv(os.path.join(root,'results.csv')); assert len(df)>0; print('Synthetic KPI workflow generated',len(df),'period rows')"
       - name: Lint
         run: ruff check .
 

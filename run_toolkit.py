@@ -10,7 +10,7 @@ Industrial Energy KPI + Normalisation + Reporting Toolkit (Demo)
     - actions.csv
     - management_report.pdf (1 page)
 
-This is a demo toolkit + workflow; adapt to site meters and SSAB-specific reporting needs.
+This is a demo toolkit + workflow; adapt to site-specific meters, data quality and reporting needs.
 """
 
 from __future__ import annotations

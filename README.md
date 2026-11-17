@@ -181,3 +181,13 @@ missing-meter propagation, zero-production intensity and synthetic truth labels.
 [![CI](https://github.com/abhijith-sivaprasadan/Energy-KPI-Toolkit/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/abhijith-sivaprasadan/Energy-KPI-Toolkit/actions/workflows/ci.yml)
 
 See [CI coverage and limitations](CI.md) for the automated checks. The status badge tracks the default branch.
+
+<!-- portfolio-reader-guide-2026:start -->
+## Engineering portfolio reader's guide (November 2026)
+
+**What to inspect:** Industrial energy performance workflow for EnPIs, load-driver normalisation, anomaly flags and inspectable management reports using demonstration inputs.
+
+**Portfolio case:** [Project context and evidence](https://abhijith-sivaprasadan.github.io/projects/industrial-energy-kpi-toolkit.html) · [Armada 2026 employer-facing selection](https://abhijith-sivaprasadan.github.io/for/armada-2026.html).
+
+These navigation links do not supersede the research status, assumptions, provenance, licences or validation limits documented above. This repository is not an employer-commissioned deliverable unless explicitly stated in its original project record.
+<!-- portfolio-reader-guide-2026:end -->
